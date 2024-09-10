@@ -28,6 +28,12 @@ private:
 
 private slots:
     void onPb1();
+    void onPb2();
+    void onPb3();
 
+public slots:
+    void onAddClient(const QString&, const QString&);
+    void onDelClient(const QString&, const QString&);
+    void onRecvData(const QString&);
 };
 #endif // WIDGET_H

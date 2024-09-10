@@ -1,8 +1,12 @@
-#include "server.h"
 #include <QDebug>
+#include "server.h"
+#include "widget.h"
 
-Server::Server(QObject *p) : QTcpServer(), parent(p)
+Server::Server(Widget *p) : QTcpServer(), parent(p)
 {
+    connect(this, &Server::addClient, p, &Widget::onAddClient);
+    connect(this, &Server::delClient, p, &Widget::onDelClient);
+    connect(this, &Server::recvClient, p, &Widget::onRecvData);
 }
 
 Server::~Server()
@@ -20,11 +24,9 @@ bool Server::startServer(const QString& ip, int port)
 
 void Server::closeServer()
 {
-    if(isListening())
-    {
-        close();
-        closeClients();
-    }
+    if(isListening())    
+        close();            
+    closeClients();
 }
 
 void Server::closeClients()
@@ -47,6 +49,11 @@ void Server::incomingConnection(qintptr socket)
         connect(p, &QTcpSocket::disconnected, this, [this, p] {onDisconnect(p);});
         clients.push_back(p);
         qDebug() << "Connect client";
+
+        QHostAddress ip = p->peerAddress();
+        quint16 port = p->peerPort();
+
+        emit addClient(ip.toString(), QString::number(port));
     }
     else
     {
@@ -55,10 +62,20 @@ void Server::incomingConnection(qintptr socket)
     }
 }
 
+void Server::sendData(const QString& msg)
+{
+    for(auto p : clients)
+    {
+        p->write(msg.toStdString().c_str());
+    }
+}
+
 void Server::onReceive(QTcpSocket* p)
 {
     QByteArray data = p->readAll();
     qDebug() << "[received data]\n" << data;
+
+    emit recvClient(QString::fromUtf8(data));
 
     // broadcast
     for(auto p : clients) {
@@ -68,5 +85,18 @@ void Server::onReceive(QTcpSocket* p)
 
 void Server::onDisconnect(QTcpSocket* p)
 {
+    // 연결이 끊어진 클라이언트만 삭제
+    for(std::vector<QTcpSocket*>::iterator itr = clients.begin(); itr!= clients.end(); ++itr)
+    {
+        if(*itr == p)
+        {
+            QHostAddress ip = p->peerAddress();
+            quint16 port = p->peerPort();
+            emit delClient(ip.toString(), QString::number(port));
+
+            //clients.erase(itr);
+            break;
+        }
+    }
 }
 
