@@ -24,19 +24,33 @@ bool Server::startServer(const QString& ip, int port)
 
 void Server::closeServer()
 {
-    if(isListening())    
-        close();            
     closeClients();
+    if(isListening())
+        close();            
 }
 
 void Server::closeClients()
 {
     // delete clients
-    for(int i=0; i<clients.size(); i++)
+    for (auto p : clients)
     {
-        clients[i]->close();
-        delete clients[i];
+        if (p)
+        {
+            QHostAddress ip = p->peerAddress();
+            quint16 port = p->peerPort();
+            emit delClient(ip.toString(), QString::number(port));
+
+            // disconnect signals
+            p->disconnect();
+
+            // close the socket
+            p->close();
+
+            // delete the socket safely
+            p->deleteLater();
+        }
     }
+    clients.clear();  // clear the vector after deleting clients
 }
 
 void Server::incomingConnection(qintptr socket)
@@ -86,17 +100,21 @@ void Server::onReceive(QTcpSocket* p)
 void Server::onDisconnect(QTcpSocket* p)
 {
     // 연결이 끊어진 클라이언트만 삭제
-    for(std::vector<QTcpSocket*>::iterator itr = clients.begin(); itr!= clients.end(); ++itr)
-    {
-        if(*itr == p)
-        {
-            QHostAddress ip = p->peerAddress();
-            quint16 port = p->peerPort();
-            emit delClient(ip.toString(), QString::number(port));
+    // 연결이 끊어진 클라이언트만 삭제
+    auto itr = std::find(clients.begin(), clients.end(), p);
 
-            //clients.erase(itr);
-            break;
-        }
+    if (itr != clients.end())
+    {
+        QHostAddress ip = p->peerAddress();
+        quint16 port = p->peerPort();
+        emit delClient(ip.toString(), QString::number(port));
+
+        clients.erase(itr);
+
+        p->disconnect();
+        p->deleteLater();
     }
+
+    qDebug() << "Number of clients:" << clients.size();
 }
 

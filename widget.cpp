@@ -29,6 +29,7 @@ Widget::Widget(QWidget *parent)
 
 Widget::~Widget()
 {
+    server.closeServer();
     delete ui;
 }
 
