@@ -9,7 +9,7 @@ Widget::Widget(QWidget *parent)
     , ui(new Ui::Widget), server(this)
 {
     ui->setupUi(this);
-    setWindowTitle("Server Side");
+    setWindowTitle("Server (Ocean Coding School)");
     ui->pb1->setCheckable(true);
 
     QStringList labels = {"IP", "PORT"};
@@ -33,7 +33,7 @@ Widget::~Widget()
     delete ui;
 }
 
-QString Widget::getActiveIP()
+QString Widget::getActiveIP() const
 {
     QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
 

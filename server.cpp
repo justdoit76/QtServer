@@ -4,9 +4,9 @@
 
 Server::Server(Widget *p) : QTcpServer(), parent(p)
 {
-    connect(this, &Server::addClient, p, &Widget::onAddClient);
-    connect(this, &Server::delClient, p, &Widget::onDelClient);
-    connect(this, &Server::recvClient, p, &Widget::onRecvData);
+    connect(this, &Server::addSignal, p, &Widget::onAddClient);
+    connect(this, &Server::delSignal, p, &Widget::onDelClient);
+    connect(this, &Server::recvSignal, p, &Widget::onRecvData);
 }
 
 Server::~Server()
@@ -38,7 +38,7 @@ void Server::closeClients()
         {
             QHostAddress ip = p->peerAddress();
             quint16 port = p->peerPort();
-            emit delClient(ip.toString(), QString::number(port));
+            emit delSignal(ip.toString(), QString::number(port));
 
             // disconnect signals
             p->disconnect();
@@ -67,7 +67,7 @@ void Server::incomingConnection(qintptr socket)
         QHostAddress ip = p->peerAddress();
         quint16 port = p->peerPort();
 
-        emit addClient(ip.toString(), QString::number(port));
+        emit addSignal(ip.toString(), QString::number(port));
     }
     else
     {
@@ -89,7 +89,7 @@ void Server::onReceive(QTcpSocket* p)
     QByteArray data = p->readAll();
     qDebug() << "[received data]\n" << data;
 
-    emit recvClient(QString::fromUtf8(data));
+    emit recvSignal(QString::fromUtf8(data));
 
     // broadcast
     for(auto p : clients) {
@@ -107,7 +107,7 @@ void Server::onDisconnect(QTcpSocket* p)
     {
         QHostAddress ip = p->peerAddress();
         quint16 port = p->peerPort();
-        emit delClient(ip.toString(), QString::number(port));
+        emit delSignal(ip.toString(), QString::number(port));
 
         clients.erase(itr);
 

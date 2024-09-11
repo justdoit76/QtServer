@@ -28,9 +28,9 @@ private:
     void closeClients();
 
 signals:
-    void addClient(const QString&, const QString&);
-    void delClient(const QString&, const QString&);
-    void recvClient(const QString&);
+    void addSignal(const QString&, const QString&);
+    void delSignal(const QString&, const QString&);
+    void recvSignal(const QString&);
 
 private slots:
     void onReceive(QTcpSocket*);

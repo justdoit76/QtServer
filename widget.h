@@ -24,7 +24,7 @@ private:
     Server server;
     static const int port;
 
-    QString getActiveIP();
+    QString getActiveIP() const;
 
 private slots:
     void onPb1();
